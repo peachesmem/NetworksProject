@@ -80,7 +80,11 @@ public class TicTacToe2Client {
         try {
             response = in.readLine();
             if (response.startsWith("WELCOME")) {
-                char mark = response.charAt(8);
+            	
+            	//NOTE*** I ran this line - charAt(8) and then it gave me 
+            	//an index out of boudn error- so i changed it to 7 and it worked
+            	
+                char mark = response.charAt(7);
                 icon = new ImageIcon(mark == 'X' ? "x.gif" : "o.gif");
                 opponentIcon  = new ImageIcon(mark == 'X' ? "o.gif" : "x.gif");
                 frame.setTitle("Tic Tac Toe - Player " + mark);
