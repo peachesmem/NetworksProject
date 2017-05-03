@@ -19,22 +19,18 @@ import javax.swing.JPanel;
 public class TicTacToe2Client {
 
     private JFrame frame = new JFrame("Tic Tac Toe");
-    private JLabel messageLabel = new JLabel("");
-    private ImageIcon icon;
+    private JLabel msgLabel = new JLabel("");
+    private ImageIcon currentIcon;
     private ImageIcon opponentIcon;
 
     private Square[] board = new Square[9];
     private Square currentSquare;
-
     private static int PORT = 8888;
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
 
-    /**
-     * Constructs the client by connecting to a server, laying out the
-     * GUI and registering GUI listeners.
-     */
+    //this will connect to the server and do GUI and GUI listeners
     public TicTacToe2Client(String serverAddress) throws Exception {
 
         // Setup networking
@@ -44,8 +40,8 @@ public class TicTacToe2Client {
         out = new PrintWriter(socket.getOutputStream(), true);
 
         // Layout GUI: graphical user interface
-        messageLabel.setBackground(Color.lightGray);
-        frame.getContentPane().add(messageLabel, "South");
+        msgLabel.setBackground(Color.lightGray);
+        frame.getContentPane().add(msgLabel, "South");
 
         JPanel boardPanel = new JPanel();
         boardPanel.setBackground(Color.black);
@@ -62,19 +58,7 @@ public class TicTacToe2Client {
         frame.getContentPane().add(boardPanel, "Center");
     }
 
-    /**
-     * The main thread of the client will listen for messages
-     * from the server.  The first message will be a "WELCOME"
-     * message in which we receive our mark.  Then we go into a
-     * loop listening for "VALID_MOVE", "OPPONENT_MOVED", "VICTORY",
-     * "DEFEAT", "TIE", "OPPONENT_QUIT or "MESSAGE" messages,
-     * and handling each message appropriately.  The "VICTORY",
-     * "DEFEAT" and "TIE" ask the user whether or not to play
-     * another game.  If the answer is no, the loop is exited and
-     * the server is sent a "QUIT" message.  If an OPPONENT_QUIT
-     * message is recevied then the loop will exit and the server
-     * will be sent a "QUIT" message also.
-     */
+    //this thread will listen to the messages from the server
     public void play() throws Exception {
         String response;
         try {
@@ -85,32 +69,32 @@ public class TicTacToe2Client {
             	//an index out of boudn error- so i changed it to 7 and it worked
             	
                 char mark = response.charAt(7);
-                icon = new ImageIcon(mark == 'X' ? "x.gif" : "o.gif");
+                currentIcon = new ImageIcon(mark == 'X' ? "x.gif" : "o.gif");
                 opponentIcon  = new ImageIcon(mark == 'X' ? "o.gif" : "x.gif");
                 frame.setTitle("Tic Tac Toe - Player " + mark);
             }
             while (true) {
                 response = in.readLine();
                 if (response.startsWith("VALID_MOVE")) {
-                    messageLabel.setText("Valid move, please wait");
-                    currentSquare.setIcon(icon);
+                    msgLabel.setText("Valid move, please wait");
+                    currentSquare.setIcon(currentIcon);
                     currentSquare.repaint();
                 } else if (response.startsWith("OPPONENT_MOVED")) {
                     int loc = Integer.parseInt(response.substring(15));
                     board[loc].setIcon(opponentIcon);
                     board[loc].repaint();
-                    messageLabel.setText("Opponent moved, your turn");
+                    msgLabel.setText("Opponent moved, your turn");
                 } else if (response.startsWith("VICTORY")) {
-                    messageLabel.setText("You win");
+                    msgLabel.setText("You win");
                     break;
                 } else if (response.startsWith("DEFEAT")) {
-                    messageLabel.setText("You lose");
+                    msgLabel.setText("You lose");
                     break;
                 } else if (response.startsWith("TIE")) {
-                    messageLabel.setText("You tied");
+                    msgLabel.setText("You tied");
                     break;
                 } else if (response.startsWith("MESSAGE")) {
-                    messageLabel.setText(response.substring(8));
+                    msgLabel.setText(response.substring(8));
                 }
             }
             out.println("QUIT");
@@ -122,8 +106,8 @@ public class TicTacToe2Client {
 
     private boolean wantsToPlayAgain() {
         int response = JOptionPane.showConfirmDialog(frame,
-            "Want to play again?",
-            "Tic Tac Toe is Fun Fun Fun",
+            "Do you want to play again?",
+            "Lets do it!!!",
             JOptionPane.YES_NO_OPTION);
         frame.dispose();
         return response == JOptionPane.YES_OPTION;

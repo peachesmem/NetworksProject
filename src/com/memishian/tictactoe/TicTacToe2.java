@@ -1,22 +1,23 @@
 package com.memishian.tictactoe;
 
+import java.awt.event.MouseEvent;
 import java.io.BufferedReader; 
 import java.io.IOException; 
 import java.io.InputStreamReader;
 import java.io.PrintWriter; 
 import java.net.ServerSocket; 
 import java.net.Socket;
+import java.util.Scanner;
 
 public class TicTacToe2 {
 
 	//create a tic tac toe protocol instead of just 
 	//passing data between client and server 
-	//can test game with telnet? 
 	//allows unlimited number of pairs of player to play
 	
 	public static void main(String[] args) throws Exception{
 		ServerSocket listen = new ServerSocket(8888);
-		System.out.println("Tic Tac Toe Server is running");
+		System.out.println("The Tic Tac Toe Server is now running");
 		try{
 			while(true){
 				TTTGame game = new TTTGame(); 
@@ -24,6 +25,7 @@ public class TicTacToe2 {
 				TTTGame.Player playerO = game.new Player(listen.accept(), 'O');
 				playerX.setOpponent(playerO);
 				playerO.setOpponent(playerX);
+				//player X will be the first person to log on
 				game.currentPlayer = playerX;
 				playerX.start();
 				playerO.start();
@@ -33,14 +35,15 @@ public class TicTacToe2 {
 		}
 	}
 }
-	//implements a 2 player game
-class TTTGame{
-		//a board has 9 squares and each is either clear or 
+	//a board has 9 squares and each is either clear or 
 		//has a marker in it put there by a player 
 		//use an array of player references - if null the 
 		//corresponding square is unowned, otherwise the array
 		//cell stores a reference to the player that owns it
-	private Player[] board ={
+	//implements a 2 player game
+class TTTGame{
+		
+	private Player[] TTTboard ={
 			null, null, null, 
 			null, null, null, 
 			null, null, null}; 
@@ -54,20 +57,20 @@ class TTTGame{
 	//check horizontal wins first and then vertical
 	public boolean hasWinner(){
 		return
-				(board[0] != null && board[0]==board[1] && board[0] == board[2])
-				|| (board[3] != null && board[3] == board[4] && board[3] == board[5])
-				|| (board[6] != null && board[6] == board[7] && board[6] == board[8])
-				||(board[0] != null && board[0] == board[3] && board[0] == board[6])
-				||(board[1] != null && board[1] == board[4] && board[1] == board[7])
-				||(board[2] != null && board[2] == board[5] && board[2] == board[8])
-				||(board[0] != null && board[0] == board[4] && board[0] == board[8])
-				||(board[2] != null && board[2] == board[4] && board[2] == board[6]);
+				(TTTboard[0] != null && TTTboard[0]==TTTboard[1] && TTTboard[0] == TTTboard[2])
+				|| (TTTboard[3] != null && TTTboard[3] == TTTboard[4] && TTTboard[3] == TTTboard[5])
+				|| (TTTboard[6] != null && TTTboard[6] == TTTboard[7] && TTTboard[6] == TTTboard[8])
+				||(TTTboard[0] != null && TTTboard[0] == TTTboard[3] && TTTboard[0] == TTTboard[6])
+				||(TTTboard[1] != null && TTTboard[1] == TTTboard[4] && TTTboard[1] == TTTboard[7])
+				||(TTTboard[2] != null && TTTboard[2] == TTTboard[5] && TTTboard[2] == TTTboard[8])
+				||(TTTboard[0] != null && TTTboard[0] == TTTboard[4] && TTTboard[0] == TTTboard[8])
+				||(TTTboard[2] != null && TTTboard[2] == TTTboard[4] && TTTboard[2] == TTTboard[6]);
 	}
 	
 	//this will check to see if there are no more empty spaces in the board
-	public boolean boardFilledUp(){
-		for(int i=0; i<board.length; i++){
-			if(board[i] == null){
+	public boolean boardFilled(){
+		for(int i=0; i<TTTboard.length; i++){
+			if(TTTboard[i] == null){
 				return false; 
 			}
 		}
@@ -79,9 +82,9 @@ class TTTGame{
 	//and the square is not already filled
 	//if it is legal then the game will be updated
 	//next player is notified 
-	public synchronized boolean legalMove(int location, Player player){
-		if(player == currentPlayer && board[location] == null){
-			board[location] = currentPlayer;
+	public synchronized boolean moveCheck(int location, Player player){
+		if(player == currentPlayer && TTTboard[location] == null){
+			TTTboard[location] = currentPlayer;
 			currentPlayer = currentPlayer.opponent;
 			currentPlayer.otherPlayerMoved(location);
 			return true;
@@ -95,25 +98,25 @@ class TTTGame{
 	//to communicate with client, player has socket with input 
 	//and output streams - use a reader and a writer
 	class Player extends Thread{
-		char mark; 
 		Player opponent; 
-		Socket socket; 
-		BufferedReader input; 
-		PrintWriter output; 
+		char character; 
+		Socket TTTsocket; 
+		BufferedReader input = null; 
+		PrintWriter output = null; 
 		
 		//this makes a handler thread for a given socket and mark 
 		//it initializes the stream field and dipslays 
 		//2 welcoming messages
-		public Player(Socket socket, char mark){
-			this.socket = socket; 
-			this.mark = mark; 
+		public Player(Socket TTTsocket, char character){
+			this.TTTsocket = TTTsocket; 
+			this.character = character; 
 			try{
-				input = new BufferedReader(new InputStreamReader(socket.getInputStream())); 
-				output = new PrintWriter(socket.getOutputStream(), true); 
-				output.println("WELCOME"+mark);
-				output.println("MESSAGE Waiting for opponent to connect"); 
+				input = new BufferedReader(new InputStreamReader(TTTsocket.getInputStream())); 
+				output = new PrintWriter(TTTsocket.getOutputStream(), true); 
+				output.println("WELCOME Character "+ character);
+				output.println("MESSAGE We are waiting for the opponent to connect"); 
 			}catch(IOException e){
-				System.out.println("Player died: "+e);
+				System.out.println("The player died: "+e);
 			}
 		}
 		
@@ -125,7 +128,7 @@ class TTTGame{
 		//handles otherPlayerMoved Message
 		public void otherPlayerMoved(int location){
 			output.println("OPPONENT_MOVED"+location);
-			output.println(hasWinner()? "DEFEAT" : boardFilledUp()? "TIE": ""); 
+			output.println(hasWinner()? "DEFEAT" : boardFilled()? "TIE": ""); 
 			
 		}
 		
@@ -133,38 +136,45 @@ class TTTGame{
 		public void run(){
 			try{
 				//only prints this if everyone connects
-				output.println("MESSAGE All players connected");
+				output.println("MESSAGE All players are connected");
 				
-				if(mark=='X'){
-					output.println("MESSAGE Your move"); 
+				if(character=='X'){
+					output.println("MESSAGE It is now your move"); 
 				}
-				
+				String command;
 				while(true){
-					String command = input.readLine();
+					command = input.readLine();
+					
 					if(command.startsWith("MOVE")){
 						int location = Integer.parseInt(command.substring(5)); 
-						if(legalMove(location, this)){
+						if(moveCheck(location, this)){
 							output.println("VALID MOVE");
 							output.println(hasWinner()? "VICTORY": 
-								boardFilledUp()? "TIE" : ""); 
+								boardFilled()? "TIE" : ""); 
 						}
 						else{
 							output.println("MESSAGE ?"); 
 						}	
 					}
 					else if(command.startsWith("QUIT")){
+						//if(command.startsWith("QUIT")){
 						return;
 					}
 				}
+			
 				
-			}catch(IOException e){
-				System.out.println("Player died: "+e);
-			}finally{
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			finally{
 				try{
-					socket.close();
+					TTTsocket.close();
 				}catch(IOException e){}
 			}	
 			}
+		
+		
 		}	
 	}
 
